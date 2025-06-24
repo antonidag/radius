@@ -73,10 +73,17 @@ jobs:
         run: gh --version
 
       - name: Append environment info to GitHub release
-        run: |
-          current_body=$(gh release view ${{ github.event.inputs.version_tag }} --json body -q ".body")
-          timestamp=$(date +'%Y-%m-%d %H:%M:%S')
-          updated_body="✅ Deployed to: ${{ github.event.inputs.environment }} at ${timestamp} by @${{ github.actor }}\n\n${current_body}"
-          gh release edit ${{ github.event.inputs.version_tag }} --notes "$updated_body"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    current_body=$(gh release view ${{ github.event.inputs.version_tag }} --json body -q ".body")
+    timestamp=$(date +'%Y-%m-%d %H:%M:%S')
+    updated_body=$(
+      cat <<EOF
+      ✅ Deployed to: ${{ github.event.inputs.environment }} at ${timestamp} by @${{ github.actor }}
+
+      ${current_body}
+      EOF
+      )
+    gh release edit ${{ github.event.inputs.version_tag }} --notes "$updated_body"
+  env:
+    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
