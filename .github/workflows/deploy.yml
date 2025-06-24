@@ -11,6 +11,9 @@ on:
         type: choice
         options: [test, prod]
         description: "Deployment environment (test or prod)"
+      version_tag:
+        required: false
+        description: "Version tag to deploy/rollback to, e.g. v-int2001-<sha>"
 
 permissions:
   contents: write
@@ -23,13 +26,18 @@ jobs:
       IMAGE: ghcr.io/${{ github.repository_owner }}/${{ github.event.inputs.integration_id }}
       INTEGRATION_ID: ${{ github.event.inputs.integration_id }}
       ENVIRONMENT: ${{ github.event.inputs.environment }}
+      VERSION_TAG: ${{ github.event.inputs.version_tag }}
     steps:
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Pull and extract integration.zip from container
         run: |
-          container_id=$(docker create $IMAGE:$ENVIRONMENT)
+          tag=${{ env.VERSION_TAG }}
+          if [ -z "$tag" ]; then
+            tag=${{ env.ENVIRONMENT }}
+          fi
+          container_id=$(docker create $IMAGE:$tag)
           docker cp $container_id:/artifact/integration.zip ./integration.zip
           docker rm $container_id
           unzip -o integration.zip -d integration_artifact
@@ -44,11 +52,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.INTEGRATION_ID }}-${{ github.sha }}
-          name: "Integration: ${{ env.INTEGRATION_ID }}"
+          tag_name: v${{ env.INTEGRATION_ID }}
+          name: "Integration Application: ${{ env.INTEGRATION_ID }}"
+          append_body: true
           body: |
-            ## Integration: ${{ env.INTEGRATION_ID }}
-
             - **Version:** `v-${{ env.INTEGRATION_ID }}-${{ github.sha }}`
             - **Package:** [ghcr.io/${{ github.repository_owner }}/${{ env.INTEGRATION_ID }}:${{ github.sha }}](https://github.com/users/${{ github.repository_owner }}/packages/container/${{ env.INTEGRATION_ID }})
             - **Deployed to:** ${{ env.ENVIRONMENT }}
