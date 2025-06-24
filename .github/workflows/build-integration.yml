@@ -1,4 +1,6 @@
 name: Build Integration (Reusable)
+permissions:
+  contents: write
 
 on:
   workflow_call:
