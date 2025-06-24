@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    uses: ./.github/workflows/reusable/build-integration.yml
+    uses: ./.github/workflows/build-integration.yml
     with:
       integration_id: ${{ github.event.inputs.integration_id }}
       version_tag: v${{ github.run_id }}-${{ github.event.inputs.integration_id }}
