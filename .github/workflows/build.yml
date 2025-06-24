@@ -31,6 +31,10 @@ jobs:
         run: |
           cat <<EOF > build/Dockerfile
           FROM scratch
+          LABEL org.opencontainers.image.title="Integration Package: int2001"
+          LABEL org.opencontainers.image.description="Versioned integration artifact for int2001, used to deploy via CI/CD."
+          LABEL org.opencontainers.image.source="https://github.com/your-org/your-repo"
+          LABEL org.opencontainers.image.licenses="MIT"
           ADD integration.zip /
           EOF
 
