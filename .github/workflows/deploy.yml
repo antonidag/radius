@@ -5,41 +5,58 @@ on:
     inputs:
       integration_id:
         required: true
-        description: 'Integration ID, e.g. int2001'
-      tag:
+        description: "Integration ID, e.g. int2001"
+      environment:
         required: true
-        description: 'Tag to deploy, e.g. latest, prod, or a commit SHA'
+        type: choice
+        options: [test, prod]
+        description: "Deployment environment (test or prod)"
 
 permissions:
+  contents: write
   packages: read
-  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
       IMAGE: ghcr.io/${{ github.repository_owner }}/${{ github.event.inputs.integration_id }}
-
+      INTEGRATION_ID: ${{ github.event.inputs.integration_id }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
     steps:
-      - name: Log in to GHCR
+      - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Pull and extract integration.zip from image
+      - name: Pull and extract integration.zip from container
         run: |
-          echo "Pulling $IMAGE:${{ github.event.inputs.tag }}"
-          docker pull $IMAGE:${{ github.event.inputs.tag }}
-
-          echo "Creating container and extracting zip"
-          container_id=$(docker create $IMAGE:${{ github.event.inputs.tag }})
+          container_id=$(docker create $IMAGE:$ENVIRONMENT)
           docker cp $container_id:/artifact/integration.zip ./integration.zip
           docker rm $container_id
-
-          unzip -o integration.zip -d extracted
+          unzip -o integration.zip -d integration_artifact
 
       - name: Inspect extracted files (debug)
-        run: ls -R extracted
+        run: ls -R integration_artifact
 
-      # 🔧 Example placeholder for real deployment:
+      # Optional: Actual deployment step
       # - name: Deploy with Azure CLI or Terraform
-      #   run: az deployment group create ... OR terraform apply ./extracted/main.tf
-  
+      #   run: az deployment group create ... OR terraform apply ...
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.INTEGRATION_ID }}-${{ github.sha }}
+          name: "Integration: ${{ env.INTEGRATION_ID }}"
+          body: |
+            ## Integration: ${{ env.INTEGRATION_ID }}
+
+            - **Version:** `v-${{ env.INTEGRATION_ID }}-${{ github.sha }}`
+            - **Package:** [ghcr.io/${{ github.repository_owner }}/${{ env.INTEGRATION_ID }}:${{ github.sha }}](https://github.com/users/${{ github.repository_owner }}/packages/container/${{ env.INTEGRATION_ID }})
+            - **Deployed to:** ${{ env.ENVIRONMENT }}
+            - **Deployed by:** @${{ github.actor }}
+            - **Deployed at:** $(date +'%Y-%m-%d %H:%M:%S')
+
+            ---
+            🗂️ Includes `integration.zip` containing packaged artifacts.
+          files: ./integration_artifact/integration.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
