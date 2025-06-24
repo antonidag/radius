@@ -10,9 +10,6 @@ on:
       integration_id:
         required: true
         description: 'Integration ID, e.g. int2001'
-      version_tag:
-        description: 'Full release tag, e.g. v-int2001-<sha> (optional, latest will be used if omitted)'
-        required: false
 
 permissions:
   contents: write  # Needed for git push and gh release edit
@@ -26,80 +23,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Determine release tag to promote
-        id: determine_tag
-        run: |
-          if [ -z "${{ github.event.inputs.version_tag }}" ]; then
-            echo "version_tag input not provided. Fetching latest release tag for integration: ${{ github.event.inputs.integration_id }}"
-
-            latest_tag=$(gh release list --repo ${{ github.repository }} --limit 100 --json tagName -q ".[] | select(.tagName | startswith(\"v-${{ github.event.inputs.integration_id }}\")) | .tagName" | head -n1)
-
-            if [ -z "$latest_tag" ]; then
-              echo "No release found for integration ${{ github.event.inputs.integration_id }}"
-              exit 1
-            fi
-
-            echo "Using latest tag: $latest_tag"
-            echo "::set-output name=tag::$latest_tag"
-          else
-            echo "Using provided version_tag: ${{ github.event.inputs.version_tag }}"
-            echo "::set-output name=tag::${{ github.event.inputs.version_tag }}"
-          fi
-        env:
-          GH_TOKEN: ${{ github.token }}
-      - name: Download release artifact
-        uses: robinraju/release-downloader@v1.12
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
         with:
-          repository: ${{ github.repository }}
-          tag: ${{ steps.determine_tag.outputs.tag }}
-          fileName: integration.zip
-          out-file-path: ./integration_artifact
-          extract: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: integration-${{ github.event.inputs.integration_id }}
+          path: ./integration_artifact
 
-#      - name: Deploy Integration
-#        uses: ./.github/workflows/deploy.yml
-#        with:
-#          environment: ${{ github.event.inputs.environment }}
-#          version_tag: ${{ steps.determine_tag.outputs.tag }}
-#          integration_path: ./integration_artifact
-
-      - name: Append to deployment audit file
-        run: |
-          mkdir -p .audit
-          VERSION_TAG="${{ steps.determine_tag.outputs.tag }}"
-          INTEGRATION_ID=$(echo "$VERSION_TAG" | sed 's/^v-//' | cut -d '-' -f 1)
-          AUDIT_FILE=".audit/${INTEGRATION_ID}.yml"
-          timestamp=$(date +'%Y-%m-%d %H:%M:%S')
-
-          NEW_ENTRY="- env: \"${{ github.event.inputs.environment }}\"
-            tag: \"$VERSION_TAG\"
-            deployed_at: \"$timestamp\"
-            by: \"@${{ github.actor }}\""
-
-          if [ -f "$AUDIT_FILE" ]; then
-            echo -e "$NEW_ENTRY\n$(cat $AUDIT_FILE)" > "$AUDIT_FILE"
-          else
-            echo -e "$NEW_ENTRY" > "$AUDIT_FILE"
-          fi
-
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-          git fetch
-          git checkout ${{ github.ref_name }}
-          git pull origin ${{ github.ref_name }}
-          git add "$AUDIT_FILE"
-          git commit -m "Prepend deployment of $INTEGRATION_ID to ${{ github.event.inputs.environment }}"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check GitHub CLI is available
-        run: gh --version
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v-${{ github.event.inputs.integration_id }}-${{ github.sha }}
+          files: ./integration_artifact/integration.zip
 
       - name: Append environment info to GitHub release
         run: |
-          current_body=$(gh release view ${{ steps.determine_tag.outputs.tag }} --json body -q ".body")
+          VERSION_TAG="v-${{ github.event.inputs.integration_id }}-${{ github.sha }}"
+          current_body=$(gh release view "$VERSION_TAG" --json body -q ".body")
           timestamp=$(date +'%Y-%m-%d %H:%M:%S')
           updated_body=$(
           cat <<EOF
@@ -108,6 +47,6 @@ jobs:
           ${current_body}
           EOF
           )
-          gh release edit ${{ steps.determine_tag.outputs.tag }} --notes "$updated_body"
+          gh release edit "$VERSION_TAG" --notes "$updated_body"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
