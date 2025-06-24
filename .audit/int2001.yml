@@ -1,3 +1,7 @@
+- env: "prod"
+  tag: "v-int2001-15042bc2c24cd68995401231f542e705d91562a4"
+  deployed_at: "2025-06-24 14:12:57"
+  by: "@antonidag"
 - env: "test"
   tag: "v-int2001-15042bc2c24cd68995401231f542e705d91562a4"
   deployed_at: "2025-06-24 14:11:21"
