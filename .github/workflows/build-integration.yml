@@ -1,0 +1,28 @@
+name: Build Integration (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      integration_id:
+        required: true
+        type: string
+      version_tag:
+        required: true
+        type: string
+
+jobs:
+  build-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Package Logic App for ${{ inputs.integration_id }}
+        run: |
+          mkdir -p ./output
+          zip -r ./output/logicapp.zip ./${{ inputs.integration_id }}/logicapp
+
+      - name: Create GitHub Release for ${{ inputs.version_tag }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ inputs.version_tag }}
+          files: ./output/logicapp.zip
