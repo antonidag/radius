@@ -1,4 +1,7 @@
-name: Build Integration and Release on PR Approval
+name: Build Integration (Reusable)
+
+permissions:
+  contents: write
 
 on:
   workflow_dispatch:
@@ -7,42 +10,29 @@ on:
         required: true
         type: string
         description: 'Integration ID to build and package'
-  pull_request:
-    types: [opened, synchronize, reopened]
-  pull_request_review:
-    types: [submitted]
 
 jobs:
   build-package:
-    if: github.event_name != 'pull_request_review'  # Build on PR open/update or manual
     runs-on: ubuntu-latest
     env:
-      # Use the integration ID from the workflow input or PR branch name
-      # If the PR branch name is formatted as 'intXXXX-some-feature', it will
-      # extract 'intXXXX' as the integration ID.
-      INTEGRATION_ID: ${{ github.event.inputs.integration_id || github.head_ref && github.head_ref.split('-')[0] }}
+      INTEGRATION_ID: ${{ github.event.inputs.integration_id }}
     steps:
       - uses: actions/checkout@v3
-      - name: Check integration folder exists
+
+      - name: Check if integration folder exists
         run: |
           if [ ! -d "${{ env.INTEGRATION_ID }}" ]; then
             echo "Integration path ${{ env.INTEGRATION_ID }} does not exist."
             exit 1
           fi
+
       - name: Package Integration for ${{ env.INTEGRATION_ID }}
         run: |
           mkdir -p ./output
           zip -r ./output/integration.zip ./${{ env.INTEGRATION_ID }}
 
-  release-on-approval:
-    if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
-    runs-on: ubuntu-latest
-    env:
-      INTEGRATION_ID: ${{ github.head_ref && github.head_ref.split('-')[0] }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Create GitHub Release on PR Approval
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ github.run_id }}-${{ env.INTEGRATION_ID }}
-          files: ./output/integration.zip  # You'll need to handle artifact sharing between jobs or rebuild here
+          tag_name: v-${{ env.INTEGRATION_ID }}-${{ github.sha }}
+          files: ./output/integration.zip
