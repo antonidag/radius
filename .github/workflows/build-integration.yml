@@ -19,7 +19,7 @@ jobs:
       - name: Package Logic App for ${{ inputs.integration_id }}
         run: |
           mkdir -p ./output
-          zip -r ./output/logicapp.zip ./${{ inputs.integration_id }}/logicapp
+          zip -r ./output/logicapp.zip ./${{ inputs.integration_id }}
 
       - name: Create GitHub Release for ${{ inputs.version_tag }}
         uses: softprops/action-gh-release@v1
