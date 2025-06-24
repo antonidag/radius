@@ -1,4 +1,4 @@
-name: Deploy Integration
+name: Deploy int2001 Integration
 
 on:
   workflow_call:
@@ -9,12 +9,15 @@ on:
       version_tag:
         required: true
         type: string
+      integration_path:
+        required: false
+        type: string
 
 jobs:
-  deploy-logicapp:
-    uses: ./.github/workflows/reusable/deploy-logic-app.yml
+  deploy:
+    uses: ./.github/workflows/deploy.yml
     with:
-      resourceGroup: rg-${{ inputs.environment }}
-      logicAppName: la-${{ inputs.environment }}-int0001
-      artifactTag: ${{ inputs.version_tag }}
+      environment: ${{ inputs.environment }}
+      version_tag: ${{ inputs.version_tag }}
+      integration_path: ${{ inputs.integration_path }}
     secrets: inherit
