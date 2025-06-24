@@ -84,6 +84,6 @@ jobs:
           EOF
           )
           gh release edit ${{ github.event.inputs.version_tag }} --notes "$updated_body"
-  env:
-    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
