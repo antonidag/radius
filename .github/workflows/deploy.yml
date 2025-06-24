@@ -54,9 +54,6 @@ jobs:
             - **Deployed to:** ${{ env.ENVIRONMENT }}
             - **Deployed by:** @${{ github.actor }}
             - **Deployed at:** $(date +'%Y-%m-%d %H:%M:%S')
-
             ---
-            🗂️ Includes `integration.zip` containing packaged artifacts.
-          files: ./integration_artifact/integration.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
