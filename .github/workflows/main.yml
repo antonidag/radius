@@ -1,0 +1,15 @@
+name: Main Build Orchestrator
+
+on:
+  workflow_dispatch:
+    inputs:
+      integration_id:
+        description: 'Integration ID (e.g., int0001)'
+        required: true
+
+jobs:
+  build:
+    uses: ./${{ github.event.inputs.integration_id }}/.github/workflows/build.yml
+    with:
+      version_tag: v${{ github.run_id }}-${{ github.event.inputs.integration_id }}
+    secrets: inherit
