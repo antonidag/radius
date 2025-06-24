@@ -22,7 +22,7 @@ jobs:
         with:
           repo: ${{ github.repository }}
           tag: ${{ inputs.artifactTag }}
-          name: logicapp-int0001
+          name: logicapp-${{ inputs.artifactName }}
 
       - name: Deploy Logic App
         run: |
