@@ -10,13 +10,32 @@ on:
         type: choice
         options: [test, prod]
       version_tag:
+        description: 'Full release tag, e.g. v-int2001-2e3f4a5b6c7d8e9f0a1b2c3d4e5f678901234567'
         required: true
+
+permissions:
+  contents: read
 
 jobs:
   promote:
-    uses: ./${{ github.event.inputs.integration_id }}/.github/workflows/deploy.yml
-    with:
-      environment: ${{ github.event.inputs.environment }}
-      version_tag: ${{ github.event.inputs.version_tag }}
-    secrets: inherit
+    runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Download release artifact
+        uses: wzieba/release-download@v1
+        with:
+          repository: ${{ github.repository }}
+          tag: ${{ github.event.inputs.version_tag }}
+          file: integration.zip
+          token: ${{ secrets.GITHUB_TOKEN }}
+          output: ./integration.zip
+
+      - name: Extract integration artifact
+        run: unzip -o ./integration.zip -d ./integration_artifact
+
+      - name: Deploy Integration
+        uses: ./.github/workflows/deploy.yml
+        with:
+          environment: ${{ github.event.inputs.environment }}
+          version_tag: ${{ github.event.inputs.version_tag }}
+          integration_path: ./integration_artifact  # pass path if needed
