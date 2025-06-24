@@ -1,0 +1,22 @@
+name: Promote Integration
+
+on:
+  workflow_dispatch:
+    inputs:
+      integration_id:
+        required: true
+      environment:
+        required: true
+        type: choice
+        options: [test, prod]
+      version_tag:
+        required: true
+
+jobs:
+  promote:
+    uses: ./${{ github.event.inputs.integration_id }}/.github/workflows/deploy.yml
+    with:
+      environment: ${{ github.event.inputs.environment }}
+      version_tag: ${{ github.event.inputs.version_tag }}
+    secrets: inherit
+    environment: ${{ github.event.inputs.environment }}

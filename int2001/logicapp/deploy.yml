@@ -1,0 +1,20 @@
+name: Deploy Integration
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      version_tag:
+        required: true
+        type: string
+
+jobs:
+  deploy-logicapp:
+    uses: ./.github/workflows/reusable/deploy-logic-app.yml
+    with:
+      resourceGroup: rg-${{ inputs.environment }}
+      logicAppName: la-${{ inputs.environment }}-int0001
+      artifactTag: ${{ inputs.version_tag }}
+    secrets: inherit

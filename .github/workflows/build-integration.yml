@@ -1,4 +1,5 @@
 name: Build Integration (Reusable)
+
 permissions:
   contents: write
 
@@ -8,9 +9,7 @@ on:
       integration_id:
         required: true
         type: string
-      version_tag:
-        required: true
-        type: string
+        description: 'Integration ID to build and package'
 
 jobs:
   build-package:
@@ -18,13 +17,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Package Logic App for ${{ inputs.integration_id }}
+      - name: Check if integration folder exists
+        run: |
+          if [ ! -d "${{ inputs.integration_id }}" ]; then
+            echo "Integration path ${{ inputs.integration_id }} does not exist."
+            exit 1
+          fi
+
+      - name: Package Integration for ${{ inputs.integration_id }}
         run: |
           mkdir -p ./output
-          zip -r ./output/logicapp.zip ./${{ inputs.integration_id }}
+          zip -r ./output/integration.zip ./${{ inputs.integration_id }}
 
-      - name: Create GitHub Release for ${{ inputs.version_tag }}
+      - name: Create GitHub Release for ${{ inputs.integration_id }}
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ inputs.version_tag }}
-          files: ./output/logicapp.zip
+          tag_name: v${{ github.run_id }}-${{ inputs.integration_id }}
+          files: ./output/integration.zip

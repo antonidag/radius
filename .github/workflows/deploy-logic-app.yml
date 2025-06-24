@@ -1,0 +1,33 @@
+name: Deploy Logic App Reusable
+
+on:
+  workflow_call:
+    inputs:
+      resourceGroup:
+        required: true
+        type: string
+      logicAppName:
+        required: true
+        type: string
+      artifactTag:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          repo: ${{ github.repository }}
+          tag: ${{ inputs.artifactTag }}
+          name: logicapp-int0001
+
+      - name: Deploy Logic App
+        run: |
+          az login --identity
+          az logicapp deployment source config-zip \
+            --name ${{ inputs.logicAppName }} \
+            --resource-group ${{ inputs.resourceGroup }} \
+            --src logicapp.zip
