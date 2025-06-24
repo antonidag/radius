@@ -22,20 +22,18 @@ jobs:
     environment: ${{ github.event.inputs.environment }}
     steps:
       - name: Download release artifact
-        uses: wzieba/release-download@v1
+        uses: robinraju/release-downloader@v1.12
         with:
           repository: ${{ github.repository }}
           tag: ${{ github.event.inputs.version_tag }}
-          file: integration.zip
+          fileName: integration.zip
+          out-file-path: ./integration_artifact
+          extract: true
           token: ${{ secrets.GITHUB_TOKEN }}
-          output: ./integration.zip
-
-      - name: Extract integration artifact
-        run: unzip -o ./integration.zip -d ./integration_artifact
 
       - name: Deploy Integration
         uses: ./.github/workflows/deploy.yml
         with:
           environment: ${{ github.event.inputs.environment }}
           version_tag: ${{ github.event.inputs.version_tag }}
-          integration_path: ./integration_artifact  # pass path if needed
+          integration_path: ./integration_artifact
