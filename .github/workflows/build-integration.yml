@@ -9,10 +9,10 @@ on:
       integration_id:
         required: true
         type: string
-        description: 'Integration ID to build and package'
+        description: 'Integration ID to build and artifact'
 
 jobs:
-  build-package:
+  build-artifact:
     runs-on: ubuntu-latest
     env:
       INTEGRATION_ID: ${{ github.event.inputs.integration_id }}
@@ -26,7 +26,7 @@ jobs:
             exit 1
           fi
 
-      - name: Package Integration for ${{ env.INTEGRATION_ID }}
+      - name: Artifact Integration for ${{ env.INTEGRATION_ID }}
         run: |
           mkdir -p ./output
           zip -r ./output/integration.zip ./${{ env.INTEGRATION_ID }}
