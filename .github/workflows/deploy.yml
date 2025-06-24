@@ -1,4 +1,3 @@
-# .github/workflows/deploy.yml
 name: Deploy Integration v2
 
 on:
@@ -6,9 +5,14 @@ on:
     inputs:
       integration_id:
         required: true
+        description: 'Integration ID, e.g. int2001'
       tag:
         required: true
-        description: 'e.g. test or prod'
+        description: 'Tag to deploy, e.g. latest, prod, or a commit SHA'
+
+permissions:
+  packages: read
+  contents: read
 
 jobs:
   deploy:
@@ -20,15 +24,22 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Extract ZIP from container
+      - name: Pull and extract integration.zip from image
         run: |
+          echo "Pulling $IMAGE:${{ github.event.inputs.tag }}"
+          docker pull $IMAGE:${{ github.event.inputs.tag }}
+
+          echo "Creating container and extracting zip"
           container_id=$(docker create $IMAGE:${{ github.event.inputs.tag }})
           docker cp $container_id:/artifact/integration.zip ./integration.zip
           docker rm $container_id
+
           unzip -o integration.zip -d extracted
 
       - name: Inspect extracted files (debug)
         run: ls -R extracted
 
+      # 🔧 Example placeholder for real deployment:
       # - name: Deploy with Azure CLI or Terraform
-      #   run: az deployment group create ... OR terraform apply
+      #   run: az deployment group create ... OR terraform apply ./extracted/main.tf
+  

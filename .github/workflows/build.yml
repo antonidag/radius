@@ -31,11 +31,13 @@ jobs:
         run: |
           cat <<EOF > build/Dockerfile
           FROM scratch
-          LABEL org.opencontainers.image.title="Integration Package: int2001"
-          LABEL org.opencontainers.image.description="Versioned integration artifact for int2001, used to deploy via CI/CD."
-          LABEL org.opencontainers.image.source="https://github.com/your-org/your-repo"
+          LABEL org.opencontainers.image.title="Integration Package: ${INTEGRATION_ID}"
+          LABEL org.opencontainers.image.description="Versioned integration artifact for ${INTEGRATION_ID}, used to deploy via CI/CD."
+          LABEL org.opencontainers.image.source="https://github.com/${{ github.repository }}"
           LABEL org.opencontainers.image.licenses="MIT"
-          ADD integration.zip /
+
+          ADD integration.zip /artifact/integration.zip
+          CMD ["echo", "Artifact container - nothing to run."]
           EOF
 
       - name: Log in to GitHub Container Registry
