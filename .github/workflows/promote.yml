@@ -8,11 +8,11 @@ on:
         type: choice
         options: [test, prod]
       version_tag:
-        description: 'Full release tag, e.g. v-int2001-2e3f4a5b6c7d8e9f0a1b2c3d4e5f678901234567'
+        description: 'Full release tag, e.g. v-int2001-<sha>'
         required: true
 
 permissions:
-  contents: read
+  contents: write  # Needed for git push and gh release edit
 
 jobs:
   promote:
@@ -29,9 +29,44 @@ jobs:
           extract: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Deploy Integration
-        uses: ./.github/workflows/deploy.yml
-        with:
-          environment: ${{ github.event.inputs.environment }}
-          version_tag: ${{ github.event.inputs.version_tag }}
-          integration_path: ./integration_artifact
+#      - name: Deploy Integration
+#        uses: ./.github/workflows/deploy.yml
+#        with:
+#          environment: ${{ github.event.inputs.environment }}
+#          version_tag: ${{ github.event.inputs.version_tag }}
+#          integration_path: ./integration_artifact
+
+      - name: Append to deployment audit file
+        run: |
+          mkdir -p .audit
+          AUDIT_FILE=".audit/${{ github.event.inputs.integration_id }}.yml"
+          timestamp=$(date +'%Y-%m-%d %H:%M:%S')
+
+          echo "- env: \"${{ github.event.inputs.environment }}\"" >> "$AUDIT_FILE"
+          echo "  tag: \"${{ github.event.inputs.version_tag }}\"" >> "$AUDIT_FILE"
+          echo "  deployed_at: \"${timestamp}\"" >> "$AUDIT_FILE"
+          echo "  by: \"@${{ github.actor }}\"" >> "$AUDIT_FILE"
+          echo "" >> "$AUDIT_FILE"
+
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git fetch
+          git checkout ${{ github.ref_name }}
+          git pull origin ${{ github.ref_name }}
+          git add "$AUDIT_FILE"
+          git commit -m "Append deployment of ${{ github.event.inputs.integration_id }} to ${{ github.event.inputs.environment }}"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install GitHub CLI
+        uses: cli/cli-action@v1
+
+      - name: Append environment info to GitHub release
+        run: |
+          current_body=$(gh release view ${{ github.event.inputs.version_tag }} --json body -q ".body")
+          timestamp=$(date +'%Y-%m-%d %H:%M:%S')
+          updated_body="${current_body}\n\n✅ Deployed to: ${{ github.event.inputs.environment }} at ${timestamp} by @${{ github.actor }}"
+          gh release edit ${{ github.event.inputs.version_tag }} --notes "$updated_body"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
