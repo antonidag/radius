@@ -19,6 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
       - name: Download release artifact
         uses: robinraju/release-downloader@v1.12
         with:
