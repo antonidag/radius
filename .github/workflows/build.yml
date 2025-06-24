@@ -1,0 +1,42 @@
+# .github/workflows/build.yml
+name: Build Integration Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      integration_id:
+        required: true
+        description: 'e.g. int2001'
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/${{ github.event.inputs.integration_id }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Zip integration folder
+        run: |
+          mkdir -p output
+          zip -r output/integration.zip ${{ github.event.inputs.integration_id }}
+
+      - name: Write Dockerfile
+        run: |
+          cat <<EOF > Dockerfile
+          FROM alpine
+          COPY output/integration.zip /artifact/integration.zip
+          EOF
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build and push image
+        run: |
+          docker build -t $IMAGE_NAME:${{ github.sha }} .
+          docker push $IMAGE_NAME:${{ github.sha }}

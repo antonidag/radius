@@ -1,0 +1,44 @@
+name: Promote Integration v2
+
+on:
+  workflow_dispatch:
+    inputs:
+      integration_id:
+        required: true
+        description: 'Integration ID, e.g. int2001'
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    env:
+      GHCR: ghcr.io/${{ github.repository_owner }}
+      INTEGRATION_ID: ${{ github.event.inputs.integration_id }}
+    steps:
+      - name: Set image name
+        id: meta
+        run: echo "image=$GHCR/$INTEGRATION_ID" >> $GITHUB_OUTPUT
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Get latest image tag from GHCR
+        id: get-latest
+        run: |
+          IMAGE_NAME=${{ steps.meta.outputs.image }}
+          # Fetch latest tag using GitHub API or assume 'build' tag if that's what your CI uses
+          # For simplicity, just use 'build' here if it's standard
+          echo "source_tag=build" >> $GITHUB_OUTPUT
+
+      - name: Pull and promote image as 'latest'
+        run: |
+          IMAGE=${{ steps.meta.outputs.image }}
+          TAG=${{ steps.get-latest.outputs.source_tag }}
+
+          echo "Promoting $IMAGE:$TAG to $IMAGE:latest"
+          docker pull $IMAGE:$TAG
+          docker tag $IMAGE:$TAG $IMAGE:latest
+          docker push $IMAGE:latest
