@@ -5,6 +5,7 @@ on:
     inputs:
       integration_id:
         required: true
+        type: string
         description: 'Integration ID, e.g. int2001'
       target_tag:
         required: true
