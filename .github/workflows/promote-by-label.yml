@@ -55,10 +55,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Remove label to prevent retrigger
-        run: |
-          LABEL_TO_REMOVE="deploy-${{ needs.determine_target_tag.outputs.target_tag }}"
-          echo "Removing label: $LABEL_TO_REMOVE"
-          gh pr edit ${{ github.event.pull_request.number }} --remove-label "$LABEL_TO_REMOVE"
+      - name: Actions Ecosystem Remove Labels
+        uses: actions-ecosystem/action-remove-labels@v1.3.0
+        with:
+          labels: |
+            deploy-dev
+            deploy-test
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
