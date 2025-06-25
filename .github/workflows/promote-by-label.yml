@@ -27,10 +27,11 @@ jobs:
         uses: actions/checkout@v3
       
       - name: Call promote.yml
-        uses: ./.github/workflows/promote.yml@main
+        uses: ./.github/workflows/promote.yml
         with:
-          integration_id: int2001  # You can parse this dynamically if needed
+          integration_id: int2001
           target_tag: ${{ steps.tag.outputs.target_tag }}
+
 
       - name: Remove promotion label to prevent retrigger
         run: |
