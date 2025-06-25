@@ -61,5 +61,4 @@ jobs:
           labels: |
             deploy-dev
             deploy-test
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
