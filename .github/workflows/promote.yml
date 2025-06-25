@@ -20,7 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GHCR: ghcr.io/${{ github.repository_owner }}
-      INTEGRATION_ID: ${{ github.event.inputs.integration_id }}
+      INTEGRATION_ID: ${{ inputs.integration_id }}
+      TARGET_TAG: ${{ inputs.target_tag }}
     steps:
       - name: Set image name
         id: meta
@@ -29,11 +30,11 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Promote image tag 'latest' to 'prod'
+      - name: Promote image tag 'latest' to target
         run: |
           IMAGE=${{ steps.meta.outputs.image }}
           SOURCE_TAG=latest
-          TARGET_TAG=prod
+          TARGET_TAG=${{ env.TARGET_TAG }}
 
           echo "Pulling $IMAGE:$SOURCE_TAG"
           docker pull $IMAGE:$SOURCE_TAG
