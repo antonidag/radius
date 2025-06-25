@@ -1,0 +1,39 @@
+name: Promote on Label
+
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  promote_based_on_label:
+    if: |
+      contains(github.event.pull_request.labels.*.name, 'deploy-dev') ||
+      contains(github.event.pull_request.labels.*.name, 'deploy-test')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine tag based on label
+        id: tag
+        run: |
+          if [[ "${{ toJson(github.event.pull_request.labels) }}" == *"deploy-dev"* ]]; then
+            echo "target_tag=dev" >> $GITHUB_OUTPUT
+          elif [[ "${{ toJson(github.event.pull_request.labels) }}" == *"deploy-test"* ]]; then
+            echo "target_tag=test" >> $GITHUB_OUTPUT
+          else
+            echo "No valid label found"
+            exit 1
+          fi
+
+      - name: Call promote.yml
+        uses: ./.github/workflows/promote.yml
+        with:
+          integration_id: int2001  # You can parse this dynamically if needed
+          target_tag: ${{ steps.tag.outputs.target_tag }}
+
+      - name: Remove promotion label to prevent retrigger
+        run: |
+          LABEL_TO_REMOVE=${{ steps.tag.outputs.target_tag == 'dev' && 'deploy-dev' || 'deploy-test' }}
+          echo "Removing label: $LABEL_TO_REMOVE"
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label "$LABEL_TO_REMOVE"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

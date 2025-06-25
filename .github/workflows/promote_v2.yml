@@ -6,6 +6,9 @@ on:
       integration_id:
         required: true
         description: 'Integration ID, e.g. int2001'
+      target_tag:
+        required: true
+        type: string
 
 permissions:
   packages: write
