@@ -23,7 +23,9 @@ jobs:
             echo "No valid label found"
             exit 1
           fi
-
+      - name: Checkout
+        uses: actions/checkout@v3
+        
       - name: Call promote.yml
         uses: ./.github/workflows/promote.yml
         with:
