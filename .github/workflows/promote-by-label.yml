@@ -3,7 +3,8 @@ name: Promote on Label
 permissions:
   packages: write
   contents: read
-  issues: write
+  id-token: write
+  pull-requests: write
 
 on:
   pull_request:
