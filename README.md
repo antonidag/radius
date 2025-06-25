@@ -1,24 +1,68 @@
 ```mermaid
 flowchart TD
- subgraph subGraph0["🚀 GitHub Workflows"]
-        W1["🔧 <b>build.yml</b><br>🔵 Manual trigger (dispatch) on feature/int*"]
-        W2["🪧 <b>promote.yml</b><br>🟡 Trigger: pull request to main<br>🟢 Trigger: merge to main"]
-        W3["🚢 <b>deploy.yml</b><br>⚙️ Called by: promote.yml or rollback.yml"]
-        W4["⏪ <b>rollback.yml</b><br>🔵 Manual trigger (dispatch)"]
+  %% Git branches
+  subgraph GIT["📁 Git Branches"]
+    branchFeature["🌱 feature/int*"]
+    branchMain["🌳 main"]
   end
-    W1 --> B1["📦 <b>Step 1: Package</b><br>- Zip integration folder"]
-    B1 --> B2["🐳 <b>Step 2: Wrap</b><br>- Build Docker image<br>- Embed ZIP as /artifact/integration.zip"]
-    B2 --> B3["🐳 <b>Step 3: Publish</b><br>- Push image to GHCR<br>- Tag with :sha and :dev"]
-    W2 --> P1["🏷️ <b>Step 1: Tag Promotion</b><br>- dev → test (on PR)<br>- test → prod (on merge)"]
-    P1 --> P2["🐳 <b>Step 2: Push Promoted Tag</b><br>- docker tag and push :test or :prod"]
-    W3 --> D1["🐳 <b>Step 1: Pull Image</b><br>- Based on env tag (test/prod)"]
-    D1 --> D2["📦 <b>Step 2: Extract Artifact</b><br>- Copy /artifact/integration.zip"]
-    D2 --> D3["🚀 <b>Step 3: Deploy</b><br>- Use Terraform or Azure CLI"]
-    D3 --> D4["🗒️ <b>Step 4: Create release and audit</b><br>"]
-    W4 --> R1["🏷️ <b>Step 1: Select Tag</b><br>- User provides integration ID + tag"]
-    R1 --> R2["🔄 <b>Step 3: Redeploy</b><br>"]
-    DevPush["🧍 Manual feature/int* trigger"] --> W1
-    PullRequest["🔃 Pull Request to main"] --> W2
-    MergeMain["✅ Merge to main"] --> W2
-    ManualRollback["🧍 Manual rollback trigger"] --> W4
+
+  %% Environments
+  subgraph ENVIRONMENTS["🌐 Azure Environments"]
+    ENV_DEV["DEV"]
+    ENV_TEST["TEST"]
+    ENV_PROD["PROD"]
+    ENV_HYBRID_PROD["PRIVATE PROD"]
+  end
+
+  %% Environments
+  subgraph Package["📦 Github Package"]
+    p1["vint2001"]
+  end
+
+  %% GitHub Workflows
+  subgraph WORKFLOWS["🚀 GitHub Workflows"]
+    W1["🔧 <b>build.yml</b><br>🔵 Manual trigger on feature/int*"]
+    W2["🪧 <b>promote.yml</b><br>🟠 PR (label: deploy-dev)<br>🟡 PR(label: deploy-test)<br>🟢 Merge to main"]
+    W3["🚢 <b>deploy.yml</b><br>⚙️ Called by promote.yml or rollback.yml"]
+    W4["⏪ <b>rollback.yml</b><br>🔵 Manual trigger"]
+  end
+
+  %% Build process
+  W1 --> B1["📦 <b>Step 1: Package</b><br>- Zip integration folder"]
+  B1 --> B2["🐳 <b>Step 2: Wrap</b><br>- Build Docker image<br>- Embed ZIP as /artifact/integration.zip"]
+  B2 --> B3["🐳 <b>Step 3: Publish</b><br>- Push to GHCR<br>- Tag: :sha + :dev"]
+  B3 --> Package
+
+
+  %% Promote process
+  W2 --> P1["🏷️ <b>Tag Promotion</b><br>- dev → test → prod"]
+  P1 --> P2["🐳 <b>Docker Tag + Push</b><br>- :dev, :test, :prod"]
+  P2 --> P3["🔄 <b>Deploy</b><br>- Triggers deploy.yml"]
+  
+
+  %% Deploy steps
+  W3 --> D1["🐳 Pull Image"]
+  D1 --> D2["📦 Extract /artifact/integration.zip"]
+  D2 --> D3["🚀 Deploy Infra/Code"]
+  D3 --> ENVIRONMENTS
+  ENVIRONMENTS --> D4["📝 Create Release Notes"]
+
+  %% Rollback
+  W4 --> R1["📥 <b>Select Tag</b><br>- Provide integration ID + tag"]
+  R1 --> R2["🔄 Re-deploy via deploy.yml"]
+
+  %% Connections
+  branchFeature --> DevPush["🧍 Developer manually triggers build"]
+  DevPush --> W1
+
+
+  branchFeature --> PR["🔃 Pull Request to main"]
+  PR -->|label: deploy-test| W2
+
+
+  branchMain <--> MergeMain["✅ Merge to main"]
+  MergeMain <--> W2
+
+  ManualRollback["🧍 Rollback (manual)"] --> W4
+
 ```
