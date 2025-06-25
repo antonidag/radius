@@ -43,7 +43,7 @@ jobs:
     needs: determine_target_tag
     uses: ./.github/workflows/promote.yml
     with:
-      integration_id: ${{ needs.determine_target_tag.outputs.integration_id }}
+      integration_id: int2001 #${{ needs.determine_target_tag.outputs.integration_id }}
       target_tag: ${{ needs.determine_target_tag.outputs.target_tag }}
     secrets: inherit
 
