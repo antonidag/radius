@@ -5,37 +5,55 @@ on:
     types: [labeled]
 
 jobs:
-  promote_based_on_label:
-    if: |
-      contains(github.event.pull_request.labels.*.name, 'deploy-dev') ||
-      contains(github.event.pull_request.labels.*.name, 'deploy-test')
+  determine_target_tag:
     runs-on: ubuntu-latest
-
+    outputs:
+      integration_id: ${{ steps.extract.outputs.integration_id }}
+      target_tag: ${{ steps.tag.outputs.target_tag }}
     steps:
+      - name: Extract integration ID from branch name
+        id: extract
+        run: |
+          # Example branch: feature/int2001-something → extract "int2001"
+          BRANCH_NAME="${{ github.head_ref }}"
+          echo "Detected branch: $BRANCH_NAME"
+          INTEGRATION_ID=$(echo "$BRANCH_NAME" | grep -oE 'int[0-9]+')
+          echo "integration_id=$INTEGRATION_ID" >> $GITHUB_OUTPUT
+
       - name: Determine tag based on label
         id: tag
         run: |
-          if [[ "${{ toJson(github.event.pull_request.labels) }}" == *"deploy-dev"* ]]; then
+          LABELS_JSON='${{ toJson(github.event.pull_request.labels) }}'
+          echo "Labels: $LABELS_JSON"
+
+          if [[ "$LABELS_JSON" == *"deploy-dev"* ]]; then
             echo "target_tag=dev" >> $GITHUB_OUTPUT
-          elif [[ "${{ toJson(github.event.pull_request.labels) }}" == *"deploy-test"* ]]; then
+          elif [[ "$LABELS_JSON" == *"deploy-test"* ]]; then
             echo "target_tag=test" >> $GITHUB_OUTPUT
           else
             echo "No valid label found"
             exit 1
           fi
-      - name: Checkout
-        uses: actions/checkout@v3
-      
-      - name: Call promote.yml
-        uses: ./.github/workflows/promote.yml
-        with:
-          integration_id: int2001
-          target_tag: ${{ steps.tag.outputs.target_tag }}
 
+  promote:
+    needs: determine_target_tag
+    uses: ./.github/workflows/promote.yml
+    with:
+      integration_id: ${{ needs.determine_target_tag.outputs.integration_id }}
+      target_tag: ${{ needs.determine_target_tag.outputs.target_tag }}
+    secrets: inherit
 
+  remove_label:
+    needs: [determine_target_tag, promote]
+    runs-on: ubuntu-latest
+    steps:
       - name: Remove promotion label to prevent retrigger
         run: |
-          LABEL_TO_REMOVE=${{ steps.tag.outputs.target_tag == 'dev' && 'deploy-dev' || 'deploy-test' }}
+          if [[ "${{ needs.determine_target_tag.outputs.target_tag }}" == "dev" ]]; then
+            LABEL_TO_REMOVE="deploy-dev"
+          else
+            LABEL_TO_REMOVE="deploy-test"
+          fi
           echo "Removing label: $LABEL_TO_REMOVE"
           gh pr edit ${{ github.event.pull_request.number }} --remove-label "$LABEL_TO_REMOVE"
         env:
