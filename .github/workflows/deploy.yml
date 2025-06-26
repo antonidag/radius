@@ -1,19 +1,24 @@
-name: Deploy Integration v2
+name: Deploy Integration
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       integration_id:
         required: true
+        type: string
         description: "Integration ID, e.g. int2001"
       environment:
         required: true
-        type: choice
-        options: [test, prod]
-        description: "Deployment environment (test or prod)"
-      version_tag:
-        required: false
-        description: "Version tag to deploy/rollback to, e.g. v-int2001-<sha>"
+        choices: [dev, test, prod]
+        description: "Deployment environment, e.g. prod"
+      deploy_code:
+        required: true
+        type: boolean
+        default: true
+      deploy_iac:
+        required: true
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -23,44 +28,41 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      IMAGE: ghcr.io/${{ github.repository_owner }}/${{ github.event.inputs.integration_id }}
-      INTEGRATION_ID: ${{ github.event.inputs.integration_id }}
-      ENVIRONMENT: ${{ github.event.inputs.environment }}
-      VERSION_TAG: ${{ github.event.inputs.version_tag }}
+      GHCR: ghcr.io/${{ github.repository_owner }}
+      IMAGE: ghcr.io/${{ github.repository_owner }}/${{ inputs.integration_id }}
+      ENVIRONMENT: ${{ inputs.environment }}
+
     steps:
-      - name: Log in to GitHub Container Registry
+      - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Pull and extract integration.zip from container
+      - name: Pull and extract integration.zip
         run: |
-          tag=${{ env.VERSION_TAG }}
-          if [ -z "$tag" ]; then
-            tag=${{ env.ENVIRONMENT }}
-          fi
-          container_id=$(docker create $IMAGE:$tag)
+          container_id=$(docker create $IMAGE:$ENVIRONMENT)
           docker cp $container_id:/artifact/integration.zip ./integration.zip
           docker rm $container_id
           unzip -o integration.zip -d integration_artifact
 
-      - name: Inspect extracted files (debug)
+      - name: Inspect files
         run: ls -R integration_artifact
 
-      # Optional: Actual deployment step
-      # - name: Deploy with Azure CLI or Terraform
-      #   run: az deployment group create ... OR terraform apply ...
+      - name: Deploy app code
+        if: inputs.deploy_code == true
+        run: echo "Deploying Logic App or Function App..."
+
+      - name: Deploy infrastructure
+        if: inputs.deploy_iac == true
+        run: echo "Deploying Terraform/Bicep..."
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ env.INTEGRATION_ID }}
-          name: "Integration Application: ${{ env.INTEGRATION_ID }}"
-          append_body: true
+          tag_name: v-${{ inputs.integration_id }}-${{ github.sha }}
+          name: "Integration: ${{ inputs.integration_id }}"
           body: |
-            - **Version:** `v-${{ env.INTEGRATION_ID }}-${{ github.sha }}`
-            - **Package:** [ghcr.io/${{ github.repository_owner }}/${{ env.INTEGRATION_ID }}:${{ github.sha }}](https://github.com/users/${{ github.repository_owner }}/packages/container/${{ env.INTEGRATION_ID }})
-            - **Deployed to:** ${{ env.ENVIRONMENT }}
+            ## Integration: ${{ inputs.integration_id }}
+            - **Environment:** `${{ inputs.environment }}`
+            - **Deploy Code:** `${{ inputs.deploy_code }}`
+            - **Deploy IaC:** `${{ inputs.deploy_iac }}`
             - **Deployed by:** @${{ github.actor }}
-            - **Deployed at:** $(date +'%Y-%m-%d %H:%M:%S')
-            ---
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - **Package:** [View](https://github.com/users/${{ github.repository_owner }}/packages/container/${{ inputs.integration_id }})
