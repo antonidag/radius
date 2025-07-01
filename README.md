@@ -118,5 +118,27 @@ flowchart TD
   RULES_FEATURE --> F1
 ```
 
-
-hello
+```mermaid
+mindmap
+  root((Integration / Logic App Standard / Function App))
+    *App Service Plan
+    Network
+     Private Endpoint
+      vNet*
+    Storage Account
+    Application Insights
+    Managed Identity
+     RBAC Role Assignments
+    App Settings
+      Referenced
+       Secrets
+        *Key Vault
+       Config
+        *Application Config
+    Communication
+        Queue / Topic / Event / Subscription
+         *Service Bus 
+         *Event Grid
+        API Management Backend
+         *Azure Api Management
+```
