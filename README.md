@@ -142,3 +142,30 @@ mindmap
         API Management Backend
          *Azure Api Management
 ```
+
+
+## ⚠️ Setup Instructions
+
+After cloning the repo, run:
+
+```bash
+./setup-hooks.sh
+```
+
+This installs the Git hook to enforce good commit messages.
+
+#### 🔃 Or hook into `post-checkout` / `post-merge` (optional)
+
+Advanced: you could even auto-run `setup-hooks.sh` using another Git hook (like `post-checkout` or `post-merge`), but that would require some setup and doesn't always run on first clone.
+
+---
+
+### ✅ Summary
+
+| Task                  | Done By       | Notes                            |
+|-----------------------|---------------|----------------------------------|
+| Write `commit-msg.sh` | You           | Add to `scripts/commit-msg.sh`  |
+| Write `setup-hooks.sh`| You           | Installs symlink to `.git/hooks`|
+| Run setup             | Each developer| Only once after cloning          |
+
+Let me know if you want to expand it to check for hook installation automatically or prompt users when missing.
