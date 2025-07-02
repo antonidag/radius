@@ -1,4 +1,40 @@
 ```mermaid
+flowchart TD
+
+
+  %% Developer steps
+  subgraph PROCESS["Workflow process"]
+      %% Developer & Git Process (Top vertical)
+    DEV["🧑‍💻 Developer<br>- Create branch feature/int* <br>Push code"]
+    PR["🔃 Open Pull Request <br>to main"]
+    REVIEW["👀 Code Review & Approvals"]
+    MERGE["✅ Merge PR to main"]
+  end
+  %% Build Phase
+  subgraph BUILD["Build & Package"]
+    B1["📦 Create integration package"]
+  end
+
+  %% Promotion Phase
+  subgraph PROMOTE["Deploy Dev/Test"]
+    P1["🏷️ Detect PR label"]
+  end
+
+  %% Deploy Phase
+  subgraph DEPLOY["Deploy Package to PROD"]
+    D3["🚀 Deploy infrastructure & application code"]
+
+  end
+
+  
+  DEV --> BUILD
+  PR --> PROMOTE
+  REVIEW --> PROMOTE
+  REVIEW --> DEPLOY
+  MERGE --> DEPLOY
+```
+
+```mermaid
 ---
 config:
   layout: dagre
