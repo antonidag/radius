@@ -205,3 +205,6 @@ Advanced: you could even auto-run `setup-hooks.sh` using another Git hook (like 
 | Run setup             | Each developer| Only once after cloning          |
 
 Let me know if you want to expand it to check for hook installation automatically or prompt users when missing.
+
+
+
