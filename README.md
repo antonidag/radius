@@ -105,7 +105,8 @@ flowchart TD
   %% promote-by-label.yml
   W5 --> L1["🔍 <b>Extract Info</b><br>- Parse branch name<br>- Determine label"]
   L1 --> L2["⚙️  <b>Trigger promote.yml</b><br>- With target tag"]
-  L2 --> L3["❌ <b>Remove label</b><br>- Avoid retriggering"]
+  L2 --> L3["⚙️  <b>Trigger deploy.yml</b><br>- With target tag"]
+  L3 --> L4["❌ <b>Remove label</b><br>- Avoid retriggering"]
 
   %% deploy-on-merge.yml
   W6 --> M1["🧠 <b>Determine deploy type</b><br>- If any label → run only that<br>- Else → run both"]
@@ -146,7 +147,8 @@ flowchart TD
   %% promote-by-label.yml
   W5 --> L1["🔍 <b>Extract Info</b><br>- Parse branch name<br>- Determine label"]
   L1 --> L2["⚙️  <b>Trigger promote.yml</b><br>- With target tag"]
-  L2 --> L3["❌ <b>Remove label</b><br>- Avoid retriggering"]
+  L2 --> L3["⚙️  <b>Trigger deploy.yml</b><br>- With target tag"]
+  L3 --> L4["❌ <b>Remove label</b><br>- Avoid retriggering"]
 
   %% deploy-on-merge.yml
   W6 --> M1["🧠 <b>Determine deploy type</b><br>- If any label → run only that<br>- Else → run both"]
