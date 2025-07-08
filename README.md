@@ -176,11 +176,11 @@ flowchart TD
 
   end
   subgraph RULES_FEATURE["🔐 Protection: <b>feature</b>"]
-    F2["🔤 Enforce Naming Pattern: feature/int*-*"]
+    F2["🔤 Enforce Naming Pattern: feature/int{number}-*"]
     F3["🚫 Disallow Force Push"]
   end
   subgraph RULES_HOTFIX["🔐 Protection: <b>hotfix</b>"]
-    H2["🔤 Enforce Naming Pattern: hotfix/int*-*"]
+    H2["🔤 Enforce Naming Pattern: hotfix/int{number}-*"]
     H3["🚫 Disallow Force Push"]
   end
   MAIN --> RULES_MAIN
