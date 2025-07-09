@@ -164,5 +164,3 @@ This Way of Working ensures:
 > Always let the workflow and automation guide the process. Manual steps should be the exception, not the norm.
 
 ---
-
-*This document is version-controlled and updated as workflows evolve. Contact the DevOps team for changes or improvements.*
