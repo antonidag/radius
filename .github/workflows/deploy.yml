@@ -10,7 +10,6 @@ on:
       environment:
         required: true
         type: string
-        choices: [dev, test, prod]
         description: "Deployment environment, e.g. prod"
       deploy_code:
         required: true
