@@ -1,7 +1,5 @@
 ```mermaid
 flowchart TD
-
-
   %% Developer steps
   subgraph PROCESS["Workflow process"]
       %% Developer & Git Process (Top vertical)
