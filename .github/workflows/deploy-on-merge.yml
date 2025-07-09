@@ -6,7 +6,7 @@ on:
     types: [closed]
 
 permissions:
-  contents: read
+  contents: write  # Needed for deploy.yml to create releases
   packages: write  # Needed for promote.yml to push tags
 
 jobs:
