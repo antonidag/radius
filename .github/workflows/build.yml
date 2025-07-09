@@ -1,11 +1,9 @@
 name: Build Integration
 
 on:
-  workflow_dispatch:
-    inputs:
-      integration_id:
-        required: true
-        description: "Integration ID, e.g. int2001"
+  pull_request:
+    branches:
+      - main
 
 permissions:
   packages: write
@@ -16,23 +14,37 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GHCR: ghcr.io/${{ github.repository_owner }}
-      INTEGRATION_ID: ${{ github.event.inputs.integration_id }}
       TAG: ${{ github.sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Extract integration ID from branch name
+        id: extract
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          echo "Branch: $BRANCH_NAME"
+
+          if [[ "$BRANCH_NAME" =~ int[0-9]+ ]]; then
+            INTEGRATION_ID="${BASH_REMATCH[0]}"
+            echo "Parsed integration ID: $INTEGRATION_ID"
+            echo "integration_id=$INTEGRATION_ID" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Could not parse integration ID from branch: $BRANCH_NAME"
+            exit 1
+          fi
+
       - name: Package integration folder
         run: |
           mkdir -p build
-          zip -r "build/integration.zip" "${INTEGRATION_ID}"
+          zip -r "build/integration.zip" "${{ steps.extract.outputs.integration_id }}"
 
       - name: Create Dockerfile wrapper
         run: |
           cat <<EOF > build/Dockerfile
           FROM scratch
-          LABEL org.opencontainers.image.title="Integration Package: ${INTEGRATION_ID}"
-          LABEL org.opencontainers.image.description="Versioned integration artifact for ${INTEGRATION_ID}, used to deploy via CI/CD."
+          LABEL org.opencontainers.image.title="Integration Package: ${{ steps.extract.outputs.integration_id }}"
+          LABEL org.opencontainers.image.description="Versioned integration artifact"
           LABEL org.opencontainers.image.source="https://github.com/${{ github.repository }}"
           LABEL org.opencontainers.image.licenses="MIT"
 
@@ -45,7 +57,7 @@ jobs:
 
       - name: Build and push image with :${{ github.sha }} and :latest
         run: |
-          IMAGE=$GHCR/$INTEGRATION_ID
+          IMAGE=$GHCR/${{ steps.extract.outputs.integration_id }}
           docker build -t $IMAGE:$TAG -t $IMAGE:latest ./build
           docker push $IMAGE:$TAG
           docker push $IMAGE:latest
