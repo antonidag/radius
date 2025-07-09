@@ -9,6 +9,7 @@ on:
         description: "Integration ID, e.g. int2001"
       environment:
         required: true
+        type: string
         choices: [dev, test, prod]
         description: "Deployment environment, e.g. prod"
       deploy_code:
