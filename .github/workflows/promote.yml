@@ -10,6 +10,7 @@ on:
       target_tag:
         required: true
         type: string
+        description: 'Environment tag to promote to, e.g. dev, test, prod'
 
 permissions:
   packages: write
@@ -22,6 +23,7 @@ jobs:
       GHCR: ghcr.io/${{ github.repository_owner }}
       INTEGRATION_ID: ${{ inputs.integration_id }}
       TARGET_TAG: ${{ inputs.target_tag }}
+      SOURCE_TAG: ${{ github.sha }} # current commit hash
     steps:
       - name: Set image name
         id: meta
@@ -30,17 +32,18 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Promote image tag 'latest' to target
+      - name: Verify image with commit SHA exists
         run: |
           IMAGE=${{ steps.meta.outputs.image }}
-          SOURCE_TAG=latest
-          TARGET_TAG=${{ env.TARGET_TAG }}
+          echo "Checking $IMAGE:$SOURCE_TAG..."
+          if ! docker pull $IMAGE:$SOURCE_TAG; then
+            echo "::error ::Image $IMAGE:$SOURCE_TAG not found. You probably forgot to build it."
+            exit 1
+          fi
 
-          echo "Pulling $IMAGE:$SOURCE_TAG"
-          docker pull $IMAGE:$SOURCE_TAG
-
-          echo "Tagging $IMAGE:$SOURCE_TAG as $IMAGE:$TARGET_TAG"
+      - name: Promote image to $TARGET_TAG
+        run: |
+          IMAGE=${{ steps.meta.outputs.image }}
           docker tag $IMAGE:$SOURCE_TAG $IMAGE:$TARGET_TAG
-
-          echo "Pushing $IMAGE:$TARGET_TAG"
           docker push $IMAGE:$TARGET_TAG
+          echo "Image $IMAGE:$TARGET_TAG promoted successfully."
