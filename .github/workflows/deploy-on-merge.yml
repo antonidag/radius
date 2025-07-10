@@ -58,6 +58,7 @@ jobs:
 
     - name: Clean up old untagged package versions
       uses: actions/delete-package-versions@v5
+      continue-on-error: true
       with:
         package-name: ${{ env.INTEGRATION_ID }}
         package-type: container
