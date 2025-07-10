@@ -30,10 +30,6 @@ jobs:
       ENVIRONMENT: ${{ inputs.environment }}
 
     steps:
-      - name: Install yq (YAML parser)
-        run: |
-          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
-          sudo chmod +x /usr/bin/yq
 
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -122,5 +118,19 @@ jobs:
             - **Version:** `v-${{ inputs.INTEGRATION_ID }}-${{ inputs.commit_sha  }}`
             - **Environment:** `${{ inputs.environment }}`
             - **Commit SHA:** `${{ inputs.commit_sha }}`
-            - **Deployed by:** @${{ github.actor }}
             - **Package:** [View Container](https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/pkgs/container/${{ inputs.integration_id }})
+            - **Deployed by:** @${{ github.actor }}
+      
+      - name: Clean up old untagged package versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ inputs.integration_id }}
+          package-type: container
+          delete-only-untagged-versions: true
+          ignore-versions: |
+            latest
+            dev
+            test
+            prod
+            ^v-${{ inputs.integration_id }}-.*
+          token: ${{ secrets.GITHUB_TOKEN }}
