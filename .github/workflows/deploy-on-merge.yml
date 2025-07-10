@@ -44,13 +44,6 @@ jobs:
       ENVIRONMENT: prod
       VERSION_TAG: v-${{ needs.extract.outputs.integration_id }}-${{ github.event.pull_request.head.sha }}
     steps:
-    - name: Tag the image with the version_tag
-      run: |
-        IMAGE=ghcr.io/$REPO_OWNER/$INTEGRATION_ID
-        docker tag $IMAGE:$COMMIT_SHA $IMAGE:$VERSION_TAG
-        docker push $IMAGE:$VERSION_TAG
-        echo "Tagged image as $VERSION_TAG"
-
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
