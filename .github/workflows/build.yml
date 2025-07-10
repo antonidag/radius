@@ -19,7 +19,7 @@ jobs:
     env:
       GHCR: ghcr.io/${{ github.repository_owner }}
       INTEGRATION_ID: ${{ needs.extract.outputs.integration_id }}
-      TAG: ${{ github.sha }}
+      TAG: ${{ github.event.pull_request.head.sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -45,11 +45,9 @@ jobs:
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build and push image with :${{ github.sha }} and :latest
+      - name: Build and push image with :$TAG and :latest
         run: |
           IMAGE=$GHCR/$INTEGRATION_ID
           docker build -t $IMAGE:$TAG -t $IMAGE:latest ./build
           docker push $IMAGE:$TAG
           docker push $IMAGE:latest
-      - name: Set outputs
-        run: echo "image=$GHCR/$INTEGRATION_ID" >> $GITHUB_OUTPUT
