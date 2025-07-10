@@ -119,8 +119,8 @@ jobs:
           tag_name: v-${{ inputs.integration_id }}-${{ inputs.commit_sha }}
           name: "Integration: ${{ inputs.integration_id }}"
           body: |
-            ## Integration: ${{ inputs.integration_id }}
-            - **Environment:** `${{ inputs.environment }}`
-            - **Commit SHA:** `${{ inputs.commit_sha }}`
+            - **Version:** `v-${{ env.INTEGRATION_ID }}-${{ inputs.commit_sha  }}`
+            - **Environment:** ${{ env.ENVIRONMENT }}
+            - **Commit SHA:** [${{ inputs.commit_sha }}]
             - **Deployed by:** @${{ github.actor }}
-            - **Package:** [View Container](https://github.com/users/${{ github.repository_owner }}/packages/container/${{ inputs.integration_id }})
+            - **Package:** [View Container](https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/pkgs/container/${{ inputs.integration_id }})
