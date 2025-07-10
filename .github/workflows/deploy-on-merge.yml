@@ -33,7 +33,7 @@ jobs:
     secrets: inherit
 
   postdeploy:
-    needs: [deploy, extract]
+    needs: [deploy, extract, promote]
     runs-on: ubuntu-latest
     env:
       INTEGRATION_ID: ${{ needs.extract.outputs.integration_id }}
@@ -42,7 +42,7 @@ jobs:
       REPO_NAME: ${{ github.event.repository.name }}
       ACTOR: ${{ github.actor }}
       ENVIRONMENT: prod
-      VERSION_TAG: v-${{ needs.extract.outputs.integration_id }}-${{ github.event.pull_request.head.sha }}
+      VERSION_TAG: ${{ needs.promote.outputs.version_tag }}
     steps:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1

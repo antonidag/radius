@@ -11,9 +11,13 @@ on:
         required: true
         type: string
         description: 'Environment tag to promote to, e.g. dev, test, prod'
-      commit_sha:                      
+      commit_sha:
         required: true
         type: string
+    outputs:
+      version_tag:
+        description: 'The version tag of the promoted image'
+        value: ${{ jobs.promote.outputs.version_tag }}
 
 permissions:
   packages: write
@@ -22,6 +26,8 @@ permissions:
 jobs:
   promote:
     runs-on: ubuntu-latest
+    outputs:
+      version_tag: ${{ steps.vtag_image.outputs.version_tag }}
     env:
       GHCR: ghcr.io/${{ github.repository_owner }}
       INTEGRATION_ID: ${{ inputs.integration_id }}
@@ -54,8 +60,10 @@ jobs:
 
       - name: Tag the image with version
         if: ${{ inputs.target_tag == 'prod' }}
+        id: vtag_image
         run: |
           IMAGE=${{ steps.meta.outputs.image }}
           docker tag $IMAGE:${{ env.SOURCE_TAG }} $IMAGE:${{ env.VERSION_TAG }}
           docker push $IMAGE:${{ env.VERSION_TAG }}
           echo "Image $IMAGE:${{ env.VERSION_TAG }} pushed successfully."
+          echo "version_tag=${{ env.VERSION_TAG }}" >> $GITHUB_OUTPUT
