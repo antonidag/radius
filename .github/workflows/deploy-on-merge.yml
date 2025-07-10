@@ -20,7 +20,7 @@ jobs:
     with:
       integration_id: ${{ needs.extract.outputs.integration_id }}
       target_tag: prod
-      commit_sha: ${{ github.event.pull_request.merge_commit_sha || github.event.pull_request.head.sha }}
+      commit_sha: ${{ github.event.pull_request.head.sha }}
     secrets: inherit
 
   deploy:
@@ -29,5 +29,5 @@ jobs:
     with:
       integration_id: ${{ needs.extract.outputs.integration_id }}
       environment: prod
-      commit_sha: ${{ github.event.pull_request.merge_commit_sha || github.event.pull_request.head.sha }}
+      commit_sha: ${{ github.event.pull_request.head.sha }}
     secrets: inherit
