@@ -63,6 +63,6 @@ jobs:
         package-name: ${{ env.INTEGRATION_ID }}
         package-type: container
         ignore-versions: ^(latest|dev|test|prod|v-.*)$
-        delete-only-untagged-versions: false
+        delete-only-untagged-versions: true
         min-versions-to-keep: 0
         token: ${{ secrets.GITHUB_TOKEN }}
