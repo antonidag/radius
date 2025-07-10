@@ -8,6 +8,7 @@ on:
         description: 'Integration ID, e.g. int2001'
       environment:
         required: true
+        description: 'Target environment, e.g. test or prod'
         type: choice
         options: [test, prod]
       version_tag:

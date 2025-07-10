@@ -105,6 +105,12 @@ jobs:
           echo "Running post-deployment scripts (post.tf)..."
           # Add your post deployment commands here
 
+      - name: Tag the image with the version_tag
+        run: |
+          docker tag $IMAGE:$SHA $IMAGE:v-${{ inputs.integration_id }}-${{ inputs.commit_sha }}
+          docker push $IMAGE:v-${{ inputs.integration_id }}-${{ inputs.commit_sha }}
+          echo "Tagged image as v-${{ inputs.integration_id }}-${{ inputs.commit_sha }}"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
