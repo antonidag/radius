@@ -32,18 +32,18 @@ jobs:
       commit_sha: ${{ github.event.pull_request.head.sha }}
     secrets: inherit
 
-postdeploy:
-  needs: [deploy, extract]
-  runs-on: ubuntu-latest
-  env:
-    INTEGRATION_ID: ${{ needs.extract.outputs.integration_id }}
-    COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
-    REPO_OWNER: ${{ github.repository_owner }}
-    REPO_NAME: ${{ github.event.repository.name }}
-    ACTOR: ${{ github.actor }}
-    ENVIRONMENT: prod
-    VERSION_TAG: v-${{ needs.extract.outputs.integration_id }}-${{ github.event.pull_request.head.sha }}
-  steps:
+  postdeploy:
+    needs: [deploy, extract]
+    runs-on: ubuntu-latest
+    env:
+      INTEGRATION_ID: ${{ needs.extract.outputs.integration_id }}
+      COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+      REPO_OWNER: ${{ github.repository_owner }}
+      REPO_NAME: ${{ github.event.repository.name }}
+      ACTOR: ${{ github.actor }}
+      ENVIRONMENT: prod
+      VERSION_TAG: v-${{ needs.extract.outputs.integration_id }}-${{ github.event.pull_request.head.sha }}
+    steps:
     - name: Tag the image with the version_tag
       run: |
         IMAGE=ghcr.io/$REPO_OWNER/$INTEGRATION_ID
