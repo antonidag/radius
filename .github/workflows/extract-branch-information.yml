@@ -16,7 +16,7 @@ jobs:
       - name: Parse integration ID from branch
         id: parse
         run: |
-          BRANCH="${{ github.ref_name }}"
+          BRANCH="${{ github.head_ref || github.ref_name }}"
           echo "Branch: $BRANCH"
           # Extract 'intXXXX' from e.g. feature/int123-description
           if [[ "$BRANCH" =~ int[0-9]+ ]]; then
