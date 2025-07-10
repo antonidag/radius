@@ -10,54 +10,23 @@ permissions:
   packages: write  # Needed for promote.yml to push tags
 
 jobs:
-  prepare:
+  extract:
     if: github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-
-    outputs:
-      integration_id: ${{ steps.extract.outputs.integration_id }}
-      deploy_code: ${{ steps.flags.outputs.deploy_code }}
-      deploy_iac: ${{ steps.flags.outputs.deploy_iac }}
-
-    steps:
-      - name: Extract Integration ID from branch
-        id: extract
-        run: |
-          BRANCH="${{ github.event.pull_request.head.ref }}"
-          echo "integration_id=$BRANCH" >> $GITHUB_OUTPUT
-
-      - name: Determine deploy flags
-        id: flags
-        run: |
-          LABELS=$(echo '${{ toJson(github.event.pull_request.labels) }}' | jq -r '.[].name' | tr '\n' ' ')
-          echo "Found labels: $LABELS"
-
-          DEPLOY_CODE=true
-          DEPLOY_IAC=true
-
-          if [[ "$LABELS" == *"deploy-code"* && "$LABELS" != *"deploy-iac"* ]]; then
-            DEPLOY_IAC=false
-          elif [[ "$LABELS" == *"deploy-iac"* && "$LABELS" != *"deploy-code"* ]]; then
-            DEPLOY_CODE=false
-          fi
-
-          echo "deploy_code=$DEPLOY_CODE" >> $GITHUB_OUTPUT
-          echo "deploy_iac=$DEPLOY_IAC" >> $GITHUB_OUTPUT
+    uses: ./.github/workflows/extract-branch-information.yml
 
   promote:
-    needs: prepare
+    needs: extract
     uses: ./.github/workflows/promote.yml
     with:
-      integration_id: ${{ needs.prepare.outputs.integration_id }}
+      integration_id: ${{ needs.extract.outputs.integration_id }}
       target_tag: prod
     secrets: inherit
 
   deploy:
-    needs: [prepare, promote]
+    needs: [extract, promote]
     uses: ./.github/workflows/deploy.yml
     with:
-      integration_id: ${{ needs.prepare.outputs.integration_id }}
+      integration_id: ${{ needs.extract.outputs.integration_id }}
       environment: prod
-      deploy_code: ${{ needs.prepare.outputs.deploy_code }}
-      deploy_iac: ${{ needs.prepare.outputs.deploy_iac }}
+      commit_sha: ${{ github.sha }}
     secrets: inherit
