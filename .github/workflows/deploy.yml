@@ -11,14 +11,10 @@ on:
         required: true
         type: string
         description: "Deployment environment, e.g. prod"
-      deploy_code:
+      commit_sha:
         required: true
-        type: boolean
-        default: true
-      deploy_iac:
-        required: true
-        type: boolean
-        default: true
+        type: string
+        description: "Commit SHA of the build to deploy"
 
 permissions:
   contents: write
@@ -30,39 +26,99 @@ jobs:
     env:
       GHCR: ghcr.io/${{ github.repository_owner }}
       IMAGE: ghcr.io/${{ github.repository_owner }}/${{ inputs.integration_id }}
+      SHA: ${{ inputs.commit_sha }}
       ENVIRONMENT: ${{ inputs.environment }}
 
     steps:
-      - name: Log in to GHCR
+      - name: Install yq (YAML parser)
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+
+      - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Pull and extract integration.zip
+      - name: Pull and extract integration.zip from image :sha
         run: |
-          container_id=$(docker create $IMAGE:$ENVIRONMENT)
+          container_id=$(docker create $IMAGE:$SHA)
           docker cp $container_id:/artifact/integration.zip ./integration.zip
           docker rm $container_id
           unzip -o integration.zip -d integration_artifact
 
-      - name: Inspect files
+      - name: Inspect extracted files
         run: ls -R integration_artifact
 
-      - name: Deploy app code
-        if: inputs.deploy_code == true
-        run: echo "Deploying Logic App or Function App..."
+      - name: Detect deployment types by folder/file presence
+        id: detect_types
+        run: |
+          if [ -d integration_artifact/iac ]; then 
+            echo "deploy_iac=true" >> $GITHUB_OUTPUT
+            if [ -f integration_artifact/iac/main.tf ]; then
+              echo "has_main_tf=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_main_tf=false" >> $GITHUB_OUTPUT
+            fi
+            if [ -f integration_artifact/iac/post.tf ]; then
+              echo "deploy_postdeploy=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy_postdeploy=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "deploy_iac=false" >> $GITHUB_OUTPUT
+            echo "has_main_tf=false" >> $GITHUB_OUTPUT
+            echo "deploy_postdeploy=false" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Deploy infrastructure
-        if: inputs.deploy_iac == true
-        run: echo "Deploying Terraform/Bicep..."
+          if [ -d integration_artifact/logicapp ]; then
+            echo "deploy_logicapp=true" >> $GITHUB_OUTPUT
+          else
+            echo "deploy_logicapp=false" >> $GITHUB_OUTPUT
+          fi
+
+          if [ -d integration_artifact/funcapp ]; then
+            echo "deploy_funcapp=true" >> $GITHUB_OUTPUT
+          else
+            echo "deploy_funcapp=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy infrastructure (IaC)
+        if: steps.detect_types.outputs.deploy_iac == 'true'
+        run: |
+          echo "Deploying Terraform/Bicep/IaC..."
+          # Add your IaC deployment commands here
+
+      - name: Deploy Logic App code
+        if: steps.detect_types.outputs.deploy_logicapp == 'true'
+        run: |
+          echo "Deploying Logic App code..."
+          # Add your Logic App deploy commands here
+
+      - name: Deploy Function App code
+        if: steps.detect_types.outputs.deploy_funcapp == 'true'
+        run: |
+          echo "Deploying Function App code..."
+          # Add your Function App deploy commands here
+
+      - name: Post-deployment steps (Terraform post.tf)
+        if: steps.detect_types.outputs.deploy_postdeploy == 'true'
+        run: |
+          echo "Running post-deployment scripts (post.tf)..."
+          # Add your post deployment commands here
+
+      - name: Tag the image with the version_tag
+        run: |
+          docker tag $IMAGE:$SHA $IMAGE:v-${{ inputs.integration_id }}-${{ inputs.commit_sha }}
+          docker push $IMAGE:v-${{ inputs.integration_id }}-${{ inputs.commit_sha }}
+          echo "Tagged image as v-${{ inputs.integration_id }}-${{ inputs.commit_sha }}"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v-${{ inputs.integration_id }}-${{ github.sha }}
+          tag_name: v-${{ inputs.integration_id }}-${{ inputs.commit_sha }}
           name: "Integration: ${{ inputs.integration_id }}"
           body: |
             ## Integration: ${{ inputs.integration_id }}
             - **Environment:** `${{ inputs.environment }}`
-            - **Deploy Code:** `${{ inputs.deploy_code }}`
-            - **Deploy IaC:** `${{ inputs.deploy_iac }}`
+            - **Commit SHA:** `${{ inputs.commit_sha }}`
             - **Deployed by:** @${{ github.actor }}
-            - **Package:** [View](https://github.com/users/${{ github.repository_owner }}/packages/container/${{ inputs.integration_id }})
+            - **Package:** [View Container](https://github.com/users/${{ github.repository_owner }}/packages/container/${{ inputs.integration_id }})

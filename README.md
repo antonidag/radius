@@ -240,3 +240,9 @@ Let me know if you want to expand it to check for hook installation automaticall
 
 
 
+Replace trigger to call 
+Rollback -> allso have to be tagged with iac och code.
+Fler lager att visa interface layer 
+Önske lista vilka integation som är påverkade av
+
+Use branch rules to Require status checks to pass Build job
