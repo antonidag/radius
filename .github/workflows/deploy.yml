@@ -102,35 +102,3 @@ jobs:
         run: |
           echo "Running post-deployment scripts (post.tf)..."
           # Add your post deployment commands here
-
-      - name: Tag the image with the version_tag
-        run: |
-          docker tag $IMAGE:$SHA $IMAGE:v-${{ inputs.integration_id }}-${{ inputs.commit_sha }}
-          docker push $IMAGE:v-${{ inputs.integration_id }}-${{ inputs.commit_sha }}
-          echo "Tagged image as v-${{ inputs.integration_id }}-${{ inputs.commit_sha }}"
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v-${{ inputs.integration_id }}-${{ inputs.commit_sha }}
-          name: "Integration: ${{ inputs.integration_id }}"
-          body: |
-            - **Version:** `v-${{ inputs.INTEGRATION_ID }}-${{ inputs.commit_sha  }}`
-            - **Environment:** `${{ inputs.environment }}`
-            - **Commit SHA:** `${{ inputs.commit_sha }}`
-            - **Package:** [View Container](https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/pkgs/container/${{ inputs.integration_id }})
-            - **Deployed by:** @${{ github.actor }}
-      
-      - name: Clean up old untagged package versions
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: ${{ inputs.integration_id }}
-          package-type: container
-          delete-only-untagged-versions: true
-          ignore-versions: |
-            latest
-            dev
-            test
-            prod
-            ^v-${{ inputs.integration_id }}-.*
-          token: ${{ secrets.GITHUB_TOKEN }}

@@ -31,3 +31,47 @@ jobs:
       environment: prod
       commit_sha: ${{ github.event.pull_request.head.sha }}
     secrets: inherit
+
+postdeploy:
+  needs: [deploy, extract]
+  runs-on: ubuntu-latest
+  env:
+    INTEGRATION_ID: ${{ needs.extract.outputs.integration_id }}
+    COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+    REPO_OWNER: ${{ github.repository_owner }}
+    REPO_NAME: ${{ github.event.repository.name }}
+    ACTOR: ${{ github.actor }}
+    ENVIRONMENT: prod
+    VERSION_TAG: v-${{ needs.extract.outputs.integration_id }}-${{ github.event.pull_request.head.sha }}
+  steps:
+    - name: Tag the image with the version_tag
+      run: |
+        IMAGE=ghcr.io/$REPO_OWNER/$INTEGRATION_ID
+        docker tag $IMAGE:$COMMIT_SHA $IMAGE:$VERSION_TAG
+        docker push $IMAGE:$VERSION_TAG
+        echo "Tagged image as $VERSION_TAG"
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ env.VERSION_TAG }}
+        name: "Integration: ${{ env.INTEGRATION_ID }}"
+        body: |
+          - **Version:** `${{ env.VERSION_TAG }}`
+          - **Environment:** `${{ env.ENVIRONMENT }}`
+          - **Commit SHA:** `${{ env.COMMIT_SHA }}`
+          - **Package:** [View Container](https://github.com/${{ env.REPO_OWNER }}/${{ env.REPO_NAME }}/pkgs/container/${{ env.INTEGRATION_ID }})
+          - **Deployed by:** @${{ env.ACTOR }}
+
+    - name: Clean up old untagged package versions
+      uses: actions/delete-package-versions@v5
+      with:
+        package-name: ${{ env.INTEGRATION_ID }}
+        package-type: container
+        ignore-versions: |
+          latest
+          dev
+          test
+          prod
+          ^${{ env.VERSION_TAG }}$
+        token: ${{ secrets.GITHUB_TOKEN }}
