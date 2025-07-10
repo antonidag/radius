@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   extract:
-    uses: ./.github/workflows/extract.yml
+    uses: ./.github/workflows/extract-branch-information.yml
 
   build:
     needs: extract
