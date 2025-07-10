@@ -11,6 +11,9 @@ on:
         required: true
         type: string
         description: 'Environment tag to promote to, e.g. dev, test, prod'
+      commit_sha:                      
+        required: true
+        type: string
 
 permissions:
   packages: write
@@ -23,7 +26,7 @@ jobs:
       GHCR: ghcr.io/${{ github.repository_owner }}
       INTEGRATION_ID: ${{ inputs.integration_id }}
       TARGET_TAG: ${{ inputs.target_tag }}
-      SOURCE_TAG: ${{ github.sha }} # current commit hash
+      SOURCE_TAG: ${{ inputs.commit_sha }}
     steps:
       - name: Set image name
         id: meta
