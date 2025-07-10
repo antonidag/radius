@@ -66,5 +66,5 @@ jobs:
           dev
           test
           prod
-          ^${{ env.VERSION_TAG }}$
+          ^v-${{ env.INTEGRATION_ID }}-[0-9a-fA-F]+$
         token: ${{ secrets.GITHUB_TOKEN }}
