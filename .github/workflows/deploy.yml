@@ -119,7 +119,7 @@ jobs:
           tag_name: v-${{ inputs.integration_id }}-${{ inputs.commit_sha }}
           name: "Integration: ${{ inputs.integration_id }}"
           body: |
-            - **Version:** `v-${{ env.INTEGRATION_ID }}-${{ inputs.commit_sha  }}`
+            - **Version:** `v-${{ inputs.INTEGRATION_ID }}-${{ inputs.commit_sha  }}`
             - **Environment:** `${{ inputs.environment }}`
             - **Commit SHA:** `${{ inputs.commit_sha }}`
             - **Deployed by:** @${{ github.actor }}
