@@ -6,8 +6,8 @@ on:
     types: [closed]
 
 permissions:
-  contents: write  # Needed for deploy.yml to create releases
-  packages: write  # Needed for promote.yml to push tags
+  contents: write
+  packages: write
 
 jobs:
   extract:
@@ -20,6 +20,7 @@ jobs:
     with:
       integration_id: ${{ needs.extract.outputs.integration_id }}
       target_tag: prod
+      commit_sha: ${{ github.event.pull_request.merge_commit_sha || github.event.pull_request.head.sha }}
     secrets: inherit
 
   deploy:
@@ -28,5 +29,5 @@ jobs:
     with:
       integration_id: ${{ needs.extract.outputs.integration_id }}
       environment: prod
-      commit_sha: ${{ github.sha }}
+      commit_sha: ${{ github.event.pull_request.merge_commit_sha || github.event.pull_request.head.sha }}
     secrets: inherit
