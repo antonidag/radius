@@ -1,0 +1,28 @@
+name: Extract Integration Info
+
+on:
+  workflow_call:
+    outputs:
+      integration_id:
+        description: "Parsed integration ID from branch"
+        value: ${{ jobs.extract.outputs.integration_id }}
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    outputs:
+      integration_id: ${{ steps.parse.outputs.integration_id }}
+    steps:
+      - name: Parse integration ID from branch
+        id: parse
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          echo "Branch: $BRANCH"
+          # Extract 'intXXXX' from e.g. feature/int123-description
+          if [[ "$BRANCH" =~ int[0-9]+ ]]; then
+            INT_ID="${BASH_REMATCH[0]}"
+          else
+            echo "❌ Failed to extract integration ID"
+            exit 1
+          fi
+          echo "integration_id=$INT_ID" >> $GITHUB_OUTPUT
