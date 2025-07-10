@@ -120,7 +120,7 @@ jobs:
           name: "Integration: ${{ inputs.integration_id }}"
           body: |
             - **Version:** `v-${{ env.INTEGRATION_ID }}-${{ inputs.commit_sha  }}`
-            - **Environment:** ${{ env.ENVIRONMENT }}
+            - **Environment:** ${{ inputs.environment }}
             - **Commit SHA:** [${{ inputs.commit_sha }}]
             - **Deployed by:** @${{ github.actor }}
             - **Package:** [View Container](https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/pkgs/container/${{ inputs.integration_id }})
