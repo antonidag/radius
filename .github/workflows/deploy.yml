@@ -51,14 +51,16 @@ jobs:
       - name: Detect deployment types by folder/file presence
         id: detect_types
         run: |
-          if [ -d integration_artifact/iac ]; then 
+          BASE_DIR="integration_artifact/${{ inputs.integration_id }}"
+
+          if [ -d "$BASE_DIR/iac" ]; then 
             echo "deploy_iac=true" >> $GITHUB_OUTPUT
-            if [ -f integration_artifact/iac/main.tf ]; then
+            if [ -f "$BASE_DIR/iac/main.tf" ]; then
               echo "has_main_tf=true" >> $GITHUB_OUTPUT
             else
               echo "has_main_tf=false" >> $GITHUB_OUTPUT
             fi
-            if [ -f integration_artifact/iac/post.tf ]; then
+            if [ -f "$BASE_DIR/iac/post.tf" ]; then
               echo "deploy_postdeploy=true" >> $GITHUB_OUTPUT
             else
               echo "deploy_postdeploy=false" >> $GITHUB_OUTPUT
@@ -69,13 +71,13 @@ jobs:
             echo "deploy_postdeploy=false" >> $GITHUB_OUTPUT
           fi
 
-          if [ -d integration_artifact/logicapp ]; then
+          if [ -d "$BASE_DIR/logicapp" ]; then
             echo "deploy_logicapp=true" >> $GITHUB_OUTPUT
           else
             echo "deploy_logicapp=false" >> $GITHUB_OUTPUT
           fi
 
-          if [ -d integration_artifact/funcapp ]; then
+          if [ -d "$BASE_DIR/funcapp" ]; then
             echo "deploy_funcapp=true" >> $GITHUB_OUTPUT
           else
             echo "deploy_funcapp=false" >> $GITHUB_OUTPUT
