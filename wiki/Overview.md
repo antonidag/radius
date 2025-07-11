@@ -1,9 +1,6 @@
-# 📘 GitHub Enterprise - Way of Working
-
 ## 1. Overview
 
-This document defines the **Way of Working** for development teams using **GitHub Enterprise**. It is derived from the provided Mermaid diagrams and covers workflows around:
-
+This document defines the **Way of Working** for development teams using **GitHub**.
 * **Branching strategy** and rules
 * **GitHub Actions** for CI/CD pipelines
 * **GitHub Packages** for artifact publishing
@@ -15,7 +12,7 @@ The goal is to ensure a consistent, secure, and traceable development and deploy
 
 ## 2. Branching Strategy
 
-### 🔁 Key Branches
+### Key Branches
 
 | Branch         | Purpose                 | Naming Convention  |
 | -------------- | ----------------------- | ------------------ |
@@ -23,35 +20,33 @@ The goal is to ensure a consistent, secure, and traceable development and deploy
 | `feature/int*` | New feature development | `feature/int123-*` |
 | `hotfix/int*`  | Critical fixes to main  | `hotfix/int123-*`  |
 
-### 🔐 Protections
+### Protections
 
 **`main` branch rules:**
 
-* ✅ Require pull requests
-* 🔍 Require at least 1 code review
-* 🚫 Disallow self-review (Optional)
-* 🚫 Disallow direct and force pushes
+* Require pull requests
+* Require at least 1 code review
+* Disallow self-review (Optional)
+* Disallow direct and force pushes
 
 **`feature/*` and `hotfix/*` rules:**
 
-* 🔤 Enforce naming conventions (`feature/int{number}-*`, `hotfix/int{number}-*`)
-* 🚫 Disallow force pushes
+* Enforce naming conventions (`feature/int{number}-*`, `hotfix/int{number}-*`)
+* Disallow force pushes
 
-### 🧪 Merging Guidelines
+### Merging Guidelines
 
 * All merges into `main` must occur via pull requests.
 * Reviews are mandatory before merge.
 * CI checks must pass before a merge is allowed.
 
----
-
 ## 3. GitHub Actions
 
-### ⚙️ Overview
+### Overview
 
 GitHub Actions are used to automate build, package, promote, deploy, and rollback workflows.
 
-### 🧩 Key Workflows
+### Key Workflows
 
 | Workflow File          | Trigger                          | Purpose                          |
 | ---------------------- | -------------------------------- | -------------------------------- |
@@ -62,7 +57,7 @@ GitHub Actions are used to automate build, package, promote, deploy, and rollbac
 | `promote-by-label.yml` | Label added to PR                | Trigger promote + deploy         |
 | `deploy-on-merge.yml`  | PR merged to `main`              | Promote & deploy to production   |
 
-### 🧱 Modular Patterns
+### Modular Patterns
 
 * Workflows are broken down into discrete responsibilities (build, promote, deploy).
 * Triggers use a combination of manual triggers, labels, and events.
@@ -71,7 +66,7 @@ GitHub Actions are used to automate build, package, promote, deploy, and rollbac
 
 ## 4. GitHub Packages
 
-### 📦 Artifact Strategy
+### Artifact Strategy
 
 Artifacts are built as part of the `build.yml` workflow:
 
@@ -79,38 +74,37 @@ Artifacts are built as part of the `build.yml` workflow:
 * Docker image is built with the zip file embedded
 * Images are tagged as `latest`, then re-tagged as `:dev`, `:test`, `:prod` during promotion
 
-### 📤 Publishing
+### Publishing
 
 * Artifacts are pushed to **GitHub Container Registry (GHCR)**
 * Naming convention: `int*` per integration
 
 ### 🗃️ Retention
 
-* Older tags should be cleaned up automatically except for `:dev`, `:test`, `:prod`, `latest` and versioned release tags.
+TBD
 
----
 
 ## 5. GitHub Releases
 
 ### 📌 Versioning
 
-* Follows: `v1.2.3`
-* Tied to deployments made via `deploy.yml`
+* Follows: `Integration Application: {integration name} {curernt date}`
+* Tied to deployments for production made via `deploy.yml`
 
-### 📝 Creating Releases
+### Creating Releases
 
-* Releases are generated automatically in `deploy.yml`
+* Releases are generated automatically for production
 * Release notes include:
 
   * Integration version
-  * Deployment logs
   * Git SHA or tag
+  * Link to package
+  * Developer
 
----
 
 ## 6. Recommended Workflow
 
-### 🧑‍💻 Developer
+### Developer
 
 1. Create a new branch from `main`:
 
@@ -119,17 +113,17 @@ Artifacts are built as part of the `build.yml` workflow:
    ```
 2. Push changes and optionally trigger manual `build.yml`.
 
-### 🔃 Pull Request
+### Pull Request
 
 3. Open a pull request to `main`.
 4. Add a label if deploying to `dev`/`test` (`deploy-dev`, `deploy-test`).
 
-### 👀 Code Review & Checks
+### Code Review & Checks
 
 5. Ensure code review is done and CI checks pass.
 6. Reviewer removes any deployment label to avoid retriggering.
 
-### ✅ Merge
+### Merge
 
 7. Merge the pull request into `main`.
 8. This triggers:
@@ -137,7 +131,7 @@ Artifacts are built as part of the `build.yml` workflow:
    * `promote.yml` (for `:prod`)
    * `deploy.yml` (to deploy to production)
 
-### 🚀 Deployment
+### Deployment
 
 9. GitHub Actions will:
 
@@ -146,19 +140,33 @@ Artifacts are built as part of the `build.yml` workflow:
    * Deploy infrastructure/code
    * Generate release notes
 
-### ⏪ Rollback (If Needed)
+### Rollback (If Needed)
 
 10. Manually trigger `rollback.yml` with integration ID and version tag.
 
 ---
 
-## ✅ Summary
+## Folder Structure and Deployment Process
 
-This Way of Working ensures:
+The organization of the integration folders directly determines what gets deployed and how, as described below:
 
-* Secure, review-driven merging
-* Modular and transparent deployments
-* Clear artifact tracking via packages and releases
-* Flexible promotion paths controlled by labels or PR merges
+- **iac/**: If present, triggers infrastructure-as-code deployment (e.g., Terraform). If `main.tf` exists, it is used for the main deployment. If `post.tf` exists, post-deployment steps are executed.
+- **logicapp/**: If present, Logic App code is deployed.
+- **funcapp/**: If present, Function App code is deployed.
 
-> Always let the workflow and automation guide the process. Manual steps should be the exception, not the norm.
+During deployment, the workflow inspects each integration's folder for these subfolders. Only the components found are deployed, making the process flexible and modular. This means you can include only the folders relevant to your integration, and the deployment pipeline will automatically handle them accordingly.
+
+**Example:**
+
+```
+int2001/
+  iac/
+    main.tf
+    post.tf
+  logicapp/
+    ...
+  funcapp/
+    ...
+```
+
+In this example, all three components (IaC, Logic App, and Function App) will be deployed, including post-deployment steps.
