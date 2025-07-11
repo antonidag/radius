@@ -65,10 +65,10 @@ https://portal.azure.com/
 
 - Recommended browsers : It is recommended to use most up-to-date browser that's compatible with operating system. The following browsers are supported:
 
-  Microsoft Edge (latest version)
- Safari (latest version, Mac only)
- Chrome (latest version)
- Firefox (latest version)
+Microsoft Edge (latest version)
+Safari (latest version, Mac only)
+Chrome (latest version)
+Firefox (latest version)
 
 ### Postman
 
