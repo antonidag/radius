@@ -246,3 +246,5 @@ Fler lager att visa interface layer
 Önske lista vilka integation som är påverkade av
 
 Use branch rules to Require status checks to pass Build job
+
+ 
