@@ -1,15 +1,12 @@
 ```mermaid
----
-config:
-  layout: dagre
----
 flowchart TD
 
   %% Developer steps
   subgraph WORKPROCESS["Workflow process"]
       %% Developer & Git Process (Top vertical)
-    WP1["🧑‍💻 Developer<br>- Create branch feature/int* <br>Push code"]
-    WP2["🔃 Open Pull Request <br>to main"]
+    WP1["🧑‍💻 Developer<br>- Create branch feature/int*"]
+    WP2["🔃 Open Pull Request <br>on push to main"]
+    WP5["🏷️ Add label on Pull Request"]
     WP3["👀 Code Review & Approvals"]
     WP4["✅ Merge PR to main"]
   end
@@ -20,8 +17,8 @@ flowchart TD
   end
 
   %% Promotion Phase
-  subgraph WPPROMOTE["Deploy Dev/Test"]
-    P11["🏷️ Detect PR label"]
+  subgraph WPPROMOTE["Detect PR label"]
+    P11["⚙️ Run unit tests, deploy (code + iac) or other custom scripts"]
   end
 
   %% Deploy Phase
@@ -29,9 +26,10 @@ flowchart TD
     D32["🚀 Deploy infrastructure & application code"]
 
   end
+  WP1 --> WP2
   WP2 --> WPBUILD
-  WP2 --> WPPROMOTE
-  WP3 --> WPPROMOTE
+  WP5 --> WPPROMOTE
+  WP3 --> WP4
   WP4 --> WPDEPLOY
   
   WPBUILD --> W1
@@ -39,10 +37,10 @@ flowchart TD
   WPDEPLOY --> W6
 
   subgraph WORKFLOWS["🚀 GitHub Workflows"]
-      W1["🔧 <b>build.yml</b><br>"]
-      W2["🪧 <b>promote.yml</b><br>🟠 PR (label: deploy-dev)<br>🟡 PR(label: deploy-test)<br>🟢 Merge to main"]
-      W3["🚢 <b>deploy.yml</b><br>⚙️ Called by promote.yml or rollback.yml"]
-      W5["🏷️ <b>promote-by-label.yml</b><br>🏷️ Label added to PR (deploy-dev/test)"]
+      W1["🔧 <b>build.yml</b><br> Creates package"]
+      W2["🪧 <b>promote.yml</b><br>Add label to package"]
+      W3["🚢 <b>deploy.yml</b><br>Deploy to envionment"]
+      W5["🏷️ <b>run-script-by-label.yml</b><br>"]
       W6["✅ <b>deploy-on-merge.yml</b><br>✅ PR merged to main"]
       W4["⏪ <b>rollback.yml</b><br>🔵 Manual trigger"]
   end
@@ -52,19 +50,6 @@ flowchart TD
   B1 --> B2["🐳 <b>Step 2: Wrap</b><br>- Build Docker image<br>- Embed ZIP as /artifact/integration.zip"]
   B2 --> B3["🐳 <b>Step 3: Publish</b><br>- Push to GHCR<br>- Name: int* <br>- Tag: :latest"]
 
-  %% promote.yml
-  W2 --> P1["🏷️ <b>Tag Promotion</b><br>- dev → test → prod"]
-  P1 --> P2["🐳 <b>Docker Tag + Push</b><br>- :dev, :test, :prod"]
-
-  %% deploy.yml
-  W3 --> D1["🐳 Pull Image/Package"]
-  D1 --> D2["📦 Extract /artifact/integration.zip"]
-  D2 --> D3["📦 Detect resources"]
-  D3 --> D4["🚀 Deploy Infra/Code"]
-
-  %% rollback.yml
-  W4 --> R1["📥 <b>Select Tag</b><br>- Provide integration ID + tag"]
-  R1 --> R2["⚙️ Re-deploy via deploy.yml"]
 
   %% promote-by-label.yml
   W5 --> L1["🔍 <b>Extract Info</b><br>- Parse branch name<br>- Determine label"]
@@ -72,12 +57,27 @@ flowchart TD
   L2 --> L3["⚙️  <b>Call deploy.yml</b><br>- With target tag"]
   L3 --> L4["❌ <b>Remove label</b><br>- Avoid retriggering"]
 
+  %% promote.yml
+  W2 --> P1["🏷️ <b>Tag Promotion</b><br>- dev → test → prod"]
+  P1 --> P2["🐳 <b>Docker Tag + Push</b><br>- :dev, :test, :prod"]
+
+
+    %% deploy.yml
+  W3 --> D1["🐳 Pull Image/Package"]
+  D1 --> D2["📦 Extract /artifact/integration.zip"]
+  D2 --> D3["📦 Detect resources"]
+  D3 --> D4["🚀 Deploy Infra/Code"]
+
   %% deploy-on-merge.yml
   W6 --> M1["🧠 <b>Determine deploy type</b><br>- If any label → run only that<br>- Else → run both"]
   M1 --> M2["⚙️ <b>Call promote.yml</b><br>- With prod tag"]
   M2 --> M3["⚙️ <b>Call deploy.yml</b>"]
   M3 --> M4["📝 Create Release Notes"]
   M4 --> M5["Clean up old builds"]
+
+    %% rollback.yml
+  W4 --> R1["📥 <b>Select Tag</b><br>- Provide integration ID + tag"]
+  R1 --> R2["⚙️ Re-deploy via deploy.yml"]
 ```
 
 ```mermaid
