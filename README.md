@@ -18,7 +18,7 @@ flowchart TD
 
   %% Promotion Phase
   subgraph WPPROMOTE["Detect PR label"]
-    P11["⚙️ Run unit tests, deploy (code + iac) or other custom scripts"]
+    P11["⚙️ Run deploy (code + iac) or other custom scripts"]
   end
 
   %% Deploy Phase
@@ -52,7 +52,7 @@ flowchart TD
 
 
   %% promote-by-label.yml
-  W5 --> L1["🔍 <b>Extract Info</b><br>- Parse branch name<br>- Determine label"]
+  W5 --> L1["🔍 <b>Extract Info</b> <br>- Determine label"]
   L1 --> L2["⚙️  <b>Call promote.yml</b><br>- With target tag"]
   L2 --> L3["⚙️  <b>Call deploy.yml</b><br>- With target tag"]
   L3 --> L4["❌ <b>Remove label</b><br>- Avoid retriggering"]
@@ -72,8 +72,6 @@ flowchart TD
   D1 --> D2["📦 Extract /artifact/integration.zip"]
   D2 --> D3["📦 Detect resources"]
   D3 --> D4["🚀 Deploy Infra/Code"]
-
-
 
     %% rollback.yml
   W4 --> R1["📥 <b>Select Tag</b><br>- Provide integration ID + tag"]
