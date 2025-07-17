@@ -86,7 +86,7 @@ TBD
 
 ## 5. GitHub Releases
 
-### 📌 Versioning
+### Versioning
 
 * Follows: `Integration Application: {integration name} {curernt date}`
 * Tied to deployments for production made via `deploy.yml`
