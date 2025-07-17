@@ -69,8 +69,7 @@ flowchart TD
   D3 --> D4["🚀 Deploy Infra/Code"]
 
   %% deploy-on-merge.yml
-  W6 --> M1["🧠 <b>Determine deploy type</b><br>- If any label → run only that<br>- Else → run both"]
-  M1 --> M2["⚙️ <b>Call promote.yml</b><br>- With prod tag"]
+  W6 --> M2["⚙️ <b>Call promote.yml</b><br>- With prod tag"]
   M2 --> M3["⚙️ <b>Call deploy.yml</b>"]
   M3 --> M4["📝 Create Release Notes"]
   M4 --> M5["Clean up old builds"]
