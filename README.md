@@ -4,11 +4,11 @@ flowchart TD
   %% Developer steps
   subgraph WORKPROCESS["Workflow process"]
       %% Developer & Git Process (Top vertical)
-    WP1["🧑‍💻 Developer<br>- Create branch feature/int*"]
-    WP2["🔃 Open Pull Request <br>on push to main"]
-    WP5["🏷️ Add label on Pull Request"]
-    WP3["👀 Code Review & Approvals"]
-    WP4["✅ Merge PR to main"]
+    WP1["1: 🧑‍💻 Developer<br>- Create branch feature/int*"]
+    WP2["2: 🔃 Open Pull Request <br>on push to main"]
+    WP5["3: 🏷️ Add label on Pull Request"]
+    WP3["4: 👀 Code Review & Approvals"]
+    WP4["5: ✅ Merge PR to main"]
   end
 
   %% Build Phase
@@ -61,6 +61,11 @@ flowchart TD
   W2 --> P1["🏷️ <b>Tag Promotion</b><br>- dev → test → prod"]
   P1 --> P2["🐳 <b>Docker Tag + Push</b><br>- :dev, :test, :prod"]
 
+  %% deploy-on-merge.yml
+  W6 --> M2["⚙️ <b>Call promote.yml</b><br>- With prod tag"]
+  M2 --> M3["⚙️ <b>Call deploy.yml</b>"]
+  M3 --> M4["📝 Create Release Notes"]
+  M4 --> M5["Clean up old builds"]
 
     %% deploy.yml
   W3 --> D1["🐳 Pull Image/Package"]
@@ -68,11 +73,7 @@ flowchart TD
   D2 --> D3["📦 Detect resources"]
   D3 --> D4["🚀 Deploy Infra/Code"]
 
-  %% deploy-on-merge.yml
-  W6 --> M2["⚙️ <b>Call promote.yml</b><br>- With prod tag"]
-  M2 --> M3["⚙️ <b>Call deploy.yml</b>"]
-  M3 --> M4["📝 Create Release Notes"]
-  M4 --> M5["Clean up old builds"]
+
 
     %% rollback.yml
   W4 --> R1["📥 <b>Select Tag</b><br>- Provide integration ID + tag"]
